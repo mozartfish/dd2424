@@ -57,12 +57,13 @@ def _():
     filename = "cifar-10-python.tar.gz"
     DATA_PATH = "Datasets/"
 
-    urllib.request.urlretrieve(url, filename)
-    with tarfile.open(filename, "r:gz") as tar:
-        tar.extractall()
+    if not os.path.exists(DATA_PATH):
+        urllib.request.urlretrieve(url, filename)
+        with tarfile.open(filename, "r:gz") as tar:
+            tar.extractall()
 
-    os.rename("cifar-10-batches-py", DATA_PATH)
-    os.remove(filename)
+        os.rename("cifar-10-batches-py", DATA_PATH)
+        os.remove(filename)
     return (DATA_PATH,)
 
 
@@ -319,9 +320,9 @@ def _(init_network):
     debug_init_net = init_network()
 
     print(f"initialize network...")
-    print(f"w shape -> {debug_init_net['W'].shape}\n")
+    print(f"w shape -> {debug_init_net['W'].shape}")
     print(f"initialized weights -> {debug_init_net['W']}\n")
-    print(f"b shape -> {debug_init_net['b'].shape}\n")
+    print(f"b shape -> {debug_init_net['b'].shape}")
     print(f"initialized bias -> {debug_init_net['b']}\n")
     return
 
@@ -595,7 +596,7 @@ def _(np, small_network):
         torch_grads, my_grads = small_network()
         absolute_error_W = abs(my_grads["W"] - torch_grads["W"])
         absolute_error_b = abs(my_grads["b"] - torch_grads["b"])
-        print(f"absolute error w gradients -> {np.all(absolute_error_W < eps)}\n")
+        print(f"absolute error w gradients -> {np.all(absolute_error_W < eps)}")
         print(f"absolute error b gradients -> {np.all(absolute_error_b < eps)}\n")
     return (absolute_error_check,)
 
@@ -649,13 +650,15 @@ def _(
     """
     Train the network using mini-batch gradient descent.
     """
+
+
     def mini_batch_gd(X, Y, y, X_val, y_val, GDparams, init_net, rng):
         # Deep copy to avoid modifying the original network
         trained_net = copy.deepcopy(init_net)
-        n_batch = GDparams['n_batch']
-        eta = GDparams['eta']
-        n_epochs = GDparams['n_epochs']
-        lam = GDparams['lam']
+        n_batch = GDparams["n_batch"]
+        eta = GDparams["eta"]
+        n_epochs = GDparams["n_epochs"]
+        lam = GDparams["lam"]
         # dimensions - number of images = 10000
         n = X.shape[1]
 
@@ -689,11 +692,13 @@ def _(
                 P_batch = apply_network(X_batch, trained_net)
 
                 # backward pass
-                grad_batch = backward_pass(X_batch, Y_batch, P_batch, trained_net, lam)
+                grad_batch = backward_pass(
+                    X_batch, Y_batch, P_batch, trained_net, lam
+                )
 
                 # update parameters
-                trained_net['W'] -= eta * grad_batch['W']
-                trained_net['b'] -= eta * grad_batch['b']
+                trained_net["W"] -= eta * grad_batch["W"]
+                trained_net["b"] -= eta * grad_batch["b"]
 
             # compute metrics after each epoch
             # training metrics
@@ -702,7 +707,7 @@ def _(
             train_loss = compute_loss(P_train, y)
             train_loss_output.append(train_loss)
             # cost
-            train_cost = compute_cost(P_train, y, trained_net['W'], lam)
+            train_cost = compute_cost(P_train, y, trained_net["W"], lam)
             train_cost_output.append(train_cost)
             # accuracy
             train_acc = compute_accuracy(P_train, y)
@@ -714,18 +719,28 @@ def _(
             valid_loss = compute_loss(P_valid, y_val)
             valid_loss_output.append(valid_loss)
             # cost
-            valid_cost = compute_cost(P_valid, y_val, trained_net['W'], lam)
+            valid_cost = compute_cost(P_valid, y_val, trained_net["W"], lam)
             valid_cost_output.append(valid_cost)
             # accuracy
             valid_acc = compute_accuracy(P_valid, y_val)
             valid_acc_output.append(valid_acc)
 
-            print(f"Epoch {epoch+1}/{n_epochs}, "
-                  f"Training Loss: {train_loss:.4f}, Validation Loss: {valid_loss:.4f}, "
-                  f"Training Cost: {train_cost:.4f}, Validation Cost: {valid_cost:.4f}, "
-                  f"Training Accuracy: {train_acc:.4f}, Validation Accuracy: {valid_acc:.4f}", )
+            print(
+                f"Epoch {epoch + 1}/{n_epochs}, "
+                f"Training Loss: {train_loss:.4f}, Validation Loss: {valid_loss:.4f}, "
+                f"Training Cost: {train_cost:.4f}, Validation Cost: {valid_cost:.4f}, "
+                f"Training Accuracy: {train_acc:.4f}, Validation Accuracy: {valid_acc:.4f}",
+            )
 
-        return trained_net, train_loss_output, valid_loss_output, train_cost_output, valid_cost_output, train_acc_output, valid_acc_output
+        return (
+            trained_net,
+            train_loss_output,
+            valid_loss_output,
+            train_cost_output,
+            valid_cost_output,
+            train_acc_output,
+            valid_acc_output,
+        )
     return (mini_batch_gd,)
 
 
@@ -734,8 +749,10 @@ def _(np, plt):
     """
     Display what the features a trained network has learned.
     """
+
+
     def display_weight_matrix(filename, trained_net):
-        Ws = trained_net['W'].transpose().reshape((32, 32, 3, 10), order='F')
+        Ws = trained_net["W"].transpose().reshape((32, 32, 3, 10), order="F")
         W_im = np.transpose(Ws, (1, 0, 2, 3))
         fig, axs = plt.subplots(1, 10, figsize=(15, 3))
 
@@ -744,12 +761,14 @@ def _(np, plt):
             w_im_norm = (w_im - np.min(w_im)) / (np.max(w_im) - np.min(w_im))
 
             axs[i].imshow(w_im_norm)
-            axs[i].axis('off')
+            axs[i].axis("off")
 
         plt.tight_layout()
 
         if filename:
-          plt.savefig(filename + "_intermediate_results", dpi=300, bbox_inches='tight')
+            plt.savefig(
+                filename + "_intermediate_results", dpi=300, bbox_inches="tight"
+            )
         plt.show()
     return (display_weight_matrix,)
 
@@ -765,12 +784,14 @@ def _(
     """
     Test the trained network against the actual ground truth labels.
     """
-    def test_trained_network(trained_net):
-      P_test = apply_network(norm_X_test, trained_net)
-      test_loss = compute_loss(P_test, y_test_actual_labels)
-      test_accuracy = compute_accuracy(P_test, y_test_actual_labels)
 
-      print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+
+    def test_trained_network(trained_net):
+        P_test = apply_network(norm_X_test, trained_net)
+        test_loss = compute_loss(P_test, y_test_actual_labels)
+        test_accuracy = compute_accuracy(P_test, y_test_actual_labels)
+
+        print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
     return (test_trained_network,)
 
 
@@ -779,41 +800,51 @@ def _(plt):
     """
     Function for plotting the loss, cost, and accuracy.
     """
-    def plot_results(filename, train_loss_output, valid_loss_output, train_cost_output, valid_cost_output, train_acc_output, valid_acc_output):
-      fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-      # loss plot
-      axes[0].plot(train_loss_output, label='Training Loss')
-      axes[0].plot(valid_loss_output, label='Validation Loss')
-      axes[0].set_xlabel('Epoch')
-      axes[0].set_ylabel('Loss')
-      axes[0].legend()
-      axes[0].set_title('Training and Validation Loss')
-      axes[0].grid(True)
 
-      # cost plot
-      axes[1].plot(train_cost_output, label='Training Cost')
-      axes[1].plot(valid_cost_output, label='Validation Cost')
-      axes[1].set_xlabel('Epoch')
-      axes[1].set_ylabel('Cost')
-      axes[1].legend()
-      axes[1].set_title('Training and Validation Cost')
-      axes[1].grid(True)
+    def plot_results(
+        filename,
+        train_loss_output,
+        valid_loss_output,
+        train_cost_output,
+        valid_cost_output,
+        train_acc_output,
+        valid_acc_output,
+    ):
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-     # accuracy plot
-      axes[2].plot(train_acc_output, label='Training Accuracy')
-      axes[2].plot(valid_acc_output, label='Validation Accuracy')
-      axes[2].set_xlabel('Epoch')
-      axes[2].set_ylabel('Accuracy')
-      axes[2].legend()
-      axes[2].set_title('Training and Validation Accuracy')
-      axes[2].grid(True)
+        # loss plot
+        axes[0].plot(train_loss_output, label="Training Loss")
+        axes[0].plot(valid_loss_output, label="Validation Loss")
+        axes[0].set_xlabel("Epoch")
+        axes[0].set_ylabel("Loss")
+        axes[0].legend()
+        axes[0].set_title("Training and Validation Loss")
+        axes[0].grid(True)
 
-      plt.tight_layout()
+        # cost plot
+        axes[1].plot(train_cost_output, label="Training Cost")
+        axes[1].plot(valid_cost_output, label="Validation Cost")
+        axes[1].set_xlabel("Epoch")
+        axes[1].set_ylabel("Cost")
+        axes[1].legend()
+        axes[1].set_title("Training and Validation Cost")
+        axes[1].grid(True)
 
-      if filename:
-        plt.savefig(filename + "_results", dpi=300, bbox_inches='tight')
-      plt.show()
+        # accuracy plot
+        axes[2].plot(train_acc_output, label="Training Accuracy")
+        axes[2].plot(valid_acc_output, label="Validation Accuracy")
+        axes[2].set_xlabel("Epoch")
+        axes[2].set_ylabel("Accuracy")
+        axes[2].legend()
+        axes[2].set_title("Training and Validation Accuracy")
+        axes[2].grid(True)
+
+        plt.tight_layout()
+
+        if filename:
+            plt.savefig(filename + "_results", dpi=300, bbox_inches="tight")
+        plt.show()
     return (plot_results,)
 
 
@@ -833,32 +864,55 @@ def _(
     """
     Function for running experiments.
     """
+
+
     def run_experiments(filename, GDparams, rng):
-      print(f"Run experiment...")
-      print(f"lambda: {GDparams['lam']}")
-      print(f"number of epochs: {GDparams['n_epochs']}")
-      print(f"batch size: {GDparams['n_batch']}")
-      print(f"learning rate: {GDparams['eta']}")
-      print()
+        print(f"Run experiment...")
+        print(f"lambda: {GDparams['lam']}")
+        print(f"number of epochs: {GDparams['n_epochs']}")
+        print(f"batch size: {GDparams['n_batch']}")
+        print(f"learning rate: {GDparams['eta']}")
+        print()
 
-      print("Train neural network...")
-      trained_net, train_loss_output, valid_loss_output, train_cost_output, valid_cost_output, train_acc_output, valid_acc_output = mini_batch_gd(
-        norm_X_train, Y_train_labels, y_train_actual_labels,
-        norm_X_valid, y_valid_actual_labels,
-        GDparams, init_net, rng
-    )
-      print()
+        print("Train neural network...")
+        (
+            trained_net,
+            train_loss_output,
+            valid_loss_output,
+            train_cost_output,
+            valid_cost_output,
+            train_acc_output,
+            valid_acc_output,
+        ) = mini_batch_gd(
+            norm_X_train,
+            Y_train_labels,
+            y_train_actual_labels,
+            norm_X_valid,
+            y_valid_actual_labels,
+            GDparams,
+            init_net,
+            rng,
+        )
+        print()
 
-      print(f"Test trained neural network against ground truth...")
-      test_trained_network(trained_net)
-      print()
+        print(f"Test trained neural network against ground truth...")
+        test_trained_network(trained_net)
+        print()
 
-      print(f"Display the representations learned by the neural network...")
-      display_weight_matrix(filename, trained_net)
-      print()
+        print(f"Display the representations learned by the neural network...")
+        display_weight_matrix(filename, trained_net)
+        print()
 
-      print(f"Plot loss and accuracy...")
-      plot_results(filename, train_loss_output, valid_loss_output, train_cost_output, valid_cost_output, train_acc_output, valid_acc_output)
+        print(f"Plot loss and accuracy...")
+        plot_results(
+            filename,
+            train_loss_output,
+            valid_loss_output,
+            train_cost_output,
+            valid_cost_output,
+            train_acc_output,
+            valid_acc_output,
+        )
     return (run_experiments,)
 
 
@@ -881,15 +935,11 @@ def _(mo):
 @app.cell
 def _(np, run_experiments):
     def test_experiment1():
-        GDparams = {
-            'n_batch': 100,
-            'eta': 0.001,
-            'n_epochs': 20,
-            'lam': 0
-        }
+        GDparams = {"n_batch": 100, "eta": 0.001, "n_epochs": 20, "lam": 0}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("initial_experiments", GDparams, rng)
+
 
     test_experiment1()
     return
@@ -898,15 +948,11 @@ def _(np, run_experiments):
 @app.cell
 def _(np, run_experiments):
     def test_experiment2():
-        GDparams = {
-            'n_batch': 100,
-            'eta': 0.001,
-            'n_epochs': 40,
-            'lam': 0
-        }
+        GDparams = {"n_batch": 100, "eta": 0.001, "n_epochs": 40, "lam": 0}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("initial_experiments_2", GDparams, rng)
+
 
     test_experiment2()
     return
@@ -915,15 +961,11 @@ def _(np, run_experiments):
 @app.cell
 def _(np, run_experiments):
     def experiment1():
-        GDparams = {
-            'lam': 0,
-            'n_epochs': 40,
-            'n_batch': 100,
-            'eta': 0.1
-        }
+        GDparams = {"lam": 0, "n_epochs": 40, "n_batch": 100, "eta": 0.1}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("experiment_1", GDparams, rng)
+
 
     experiment1()
     return
@@ -932,15 +974,11 @@ def _(np, run_experiments):
 @app.cell
 def _(np, run_experiments):
     def experiment2():
-        GDparams = {
-            'lam': 0,
-            'n_epochs': 40,
-            'n_batch': 100,
-            'eta': 0.001
-        }
+        GDparams = {"lam": 0, "n_epochs": 40, "n_batch": 100, "eta": 0.001}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("experiment_2", GDparams, rng)
+
 
     experiment2()
     return
@@ -949,15 +987,11 @@ def _(np, run_experiments):
 @app.cell
 def _(np, run_experiments):
     def experiment3():
-        GDparams = {
-            'lam': 0.1,
-            'n_epochs': 40,
-            'n_batch': 100,
-            'eta': 0.001
-        }
+        GDparams = {"lam": 0.1, "n_epochs": 40, "n_batch": 100, "eta": 0.001}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("experiment_3", GDparams, rng)
+
 
     experiment3()
     return
@@ -966,15 +1000,11 @@ def _(np, run_experiments):
 @app.cell
 def _(np, run_experiments):
     def experiment4():
-        GDparams = {
-            'lam': 1.0,
-            'n_epochs': 40,
-            'n_batch': 100,
-            'eta': 0.001
-        }
+        GDparams = {"lam": 1.0, "n_epochs": 40, "n_batch": 100, "eta": 0.001}
         # set up random number generator for reproducibility
         rng = np.random.default_rng(42)
         run_experiments("experiment_4", GDparams, rng)
+
 
     experiment4()
     return

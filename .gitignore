@@ -1,2 +1,5 @@
 Datasets/
 *.png 
+*.txt 
+*.gz 
+cifar-10-batches-py/
