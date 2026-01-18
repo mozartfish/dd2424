@@ -927,7 +927,7 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md("""
-    #### Initial Experiments
+    #### Debug Experiments
     """)
     return
 
@@ -955,6 +955,14 @@ def _(np, run_experiments):
 
 
     test_experiment2()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    #### Experiments
+    """)
     return
 
 
