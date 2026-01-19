@@ -13,6 +13,14 @@ def _():
 @app.cell
 def _(mo):
     mo.md("""
+    # Assignment 3
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
     ## Libraries and imports
     """)
     return
@@ -1735,7 +1743,7 @@ def _(
 @app.cell
 def _(mo):
     mo.md("""
-    ### Exercise 3 - Neural Networks go brrrrrr......
+    ## Exercise 3 - Neural Networks go brrrrrr......
     """)
     return
 
